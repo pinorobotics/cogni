@@ -1,0 +1,107 @@
+// include xfunction for updateVersion
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath "io.github.lambdaprime:id.xfunction:27.0"
+  }
+}
+
+plugins {
+  id 'com.diffplug.spotless'
+}
+
+boolean isReleaseBuild() {
+  return version != null && version.matches("\\d+[.\\d+]*");
+}
+
+apply plugin : 'eclipse'
+
+eclipse {
+  classpath {
+    downloadJavadoc = true
+  }
+}
+
+dependencies {
+  implementation "io.github.lambdaprime:id.xfunction:28.0-SNAPSHOT"
+  implementation "io.github.lambdaprime:jros2client:12.0"
+
+  def slf4jVersion = "2.0.17"
+  implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+  implementation "org.slf4j:jul-to-slf4j:${slf4jVersion}"
+
+  def logbackVersion = "1.5.24"
+  implementation "ch.qos.logback:logback-core:${logbackVersion}"
+  implementation "ch.qos.logback:logback-classic:${logbackVersion}"
+
+  def lang4jVersion="1.13.0";
+  implementation "dev.langchain4j:langchain4j-community-mcp-server:${lang4jVersion}-beta23"
+
+}
+
+configurations {
+  customConfig.extendsFrom implementation
+}
+
+def packageDir = "$buildDir/package/${projectName}"
+
+ext.artifacts = fileTree(include: ['*'], dir: "$packageDir/libs")
+
+task createRelease(type: Zip) {
+  archiveFileName = "$releaseFileName"
+  destinationDirectory = file("$projectDir/release")
+  from file("$packageDir/..")
+}
+
+task copyLibs(type: Copy) {
+  from configurations.customConfig 
+  from jar.archiveFile
+  into "${packageDir}/libs"
+}
+
+task copyReadme(type: Copy) {
+  from("../README.md")
+  into("$buildDir/resources/main")
+  rename ("README.md", "README-${projectName}.md")
+  doLast {
+    assert file("$buildDir/resources/main/README-${projectName}.md").exists()
+  }
+}
+
+// overwrite template README which comes from resources folder
+jar.dependsOn copyReadme
+
+javadoc.enabled = false
+
+task createPackage(type: Copy, dependsOn: [copyLibs]) {
+  from "${project.rootDir}/README.md"
+  from "${project.rootDir}/LICENSE-2.0.txt"
+  from file("$projectDir/src/cogni")
+  into packageDir
+}
+
+task cleanRelease(type: Delete) {
+  delete "$packageDir"
+  delete "$projectDir/release/*-SNAPSHOT.zip"
+}
+
+createRelease.dependsOn createPackage
+assemble.dependsOn createRelease
+clean.dependsOn cleanRelease
+
+// run spotless and format code before the build
+classes.dependsOn spotlessApply
+
+task updateVersion() {
+  // update version only during release build
+  if (!isReleaseBuild()) return;
+  println "Updating version to " + version
+  new id.xfunction.text.Substitutor()
+    .withRegexpSupport()
+    .substitute(java.nio.file.Paths.get("${project.rootDir}/README.md"), Map.of(
+      "io.github.pinorobotics:cogni:[0-9.]+", "io.github.pinorobotics:cogni:" + version
+    ));
+}
+createRelease.dependsOn updateVersion

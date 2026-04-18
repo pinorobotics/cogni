@@ -1,0 +1,68 @@
+<configuration>
+	<contextListener
+		class="ch.qos.logback.classic.jul.LevelChangePropagator">
+		<!-- reset all previous level configurations of all JUL loggers to one 
+			used by logback -->
+		<resetJUL>true</resetJUL>
+	</contextListener>
+
+	<condition
+		class="ch.qos.logback.core.boolex.ExpressionPropertyCondition">
+		<expression>isDefined("LOG_FILE")</expression>
+	</condition>
+	<if>
+		<then>
+			<appender name="FILE"
+				class="ch.qos.logback.core.FileAppender">
+				<file>${LOG_FILE}</file>
+				<append>true</append>
+				<immediateFlush>true</immediateFlush>
+				<encoder>
+					<pattern>%d{yyyy-MM-dd'T'HH:mm:ss} [%level] %logger{35} - %msg%n
+					</pattern>
+				</encoder>
+			</appender>
+
+			<root level="DEBUG">
+				<appender-ref ref="FILE" />
+			</root>
+
+			<logger
+				name="pinorobotics.rtpstalk.impl.spec.transport.io.RtpsInputKineticStream"
+				level="INFO" additivity="false">
+				<appender-ref ref="FILE" />
+			</logger>
+
+			<logger name="id.kineticstreamer" level="INFO"
+				additivity="false">
+				<appender-ref ref="FILE" />
+			</logger>
+
+		</then>
+		<else>
+			<appender name="CONSOLE"
+				class="ch.qos.logback.core.ConsoleAppender">
+				<encoder>
+					<pattern>%d{yyyy-MM-dd'T'HH:mm:ss} [%level] %msg%n</pattern>
+				</encoder>
+				<target>System.err</target>
+			</appender>
+
+			<root level="INFO">
+				<appender-ref ref="CONSOLE" />
+			</root>
+
+			<logger
+				name="pinorobotics.rtpstalk.impl.spec.transport.io.RtpsInputKineticStream"
+				level="INFO" additivity="false">
+				<appender-ref ref="CONSOLE" />
+			</logger>
+
+			<logger name="id.kineticstreamer" level="INFO"
+				additivity="false">
+				<appender-ref ref="CONSOLE" />
+			</logger>
+
+		</else>
+	</if>
+</configuration>
