@@ -76,10 +76,15 @@ jar.dependsOn copyReadme
 
 javadoc.enabled = false
 
-task createPackage(type: Copy, dependsOn: [copyLibs]) {
+task copyAgent(type: Copy) {
+  from "${projectDir}/src/agent"
+  into packageDir + "/agent"
+}
+
+task createPackage(type: Copy, dependsOn: [copyLibs, copyAgent]) {
   from "${project.rootDir}/README.md"
   from "${project.rootDir}/LICENSE-2.0.txt"
-  from file("$projectDir/src/cogni")
+  from file("${projectDir}/src/cogni")
   into packageDir
 }
 
