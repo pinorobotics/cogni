@@ -22,15 +22,20 @@ import id.jros2client.JRos2ClientConfiguration;
 import id.jros2client.JRos2ClientFactory;
 import id.jros2messages.sensor_msgs.JointStateMessage;
 import id.jros2messages.trajectory_msgs.JointTrajectoryMessage;
-import id.jrosclient.TopicSubmissionPublisher;
 import id.jrosclient.TopicSubscriber;
 import id.jroscommon.RosName;
 import id.jrosmessages.trajectory_msgs.JointTrajectoryPointMessage;
 import id.xfunction.Preconditions;
 import id.xfunction.util.IdempotentService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pinorobotics.jros2actionlib.JRos2ActionLibFactory;
+import pinorobotics.jros2control.control_msgs.FollowJointTrajectoryActionDefinition;
+import pinorobotics.jros2control.control_msgs.FollowJointTrajectoryGoalMessage;
+import pinorobotics.jros2control.control_msgs.FollowJointTrajectoryResultMessage;
+import pinorobotics.jrosactionlib.JRosActionClient;
 
 /**
  * Bridge to ROS 2 for the Cogni AI‑powered robotic arm.
@@ -40,7 +45,7 @@ import org.slf4j.LoggerFactory;
  * <ul>
  *   <li>Subscription to joint‑state updates. The bridge also stores the latest joint angles for
  *       later retrieval.
- *   <li>Publication of trajectory commands
+ *   <li>Publication of trajectory commands via an action server
  *   <li>Query of the latest joint angles
  * </ul>
  *
@@ -51,10 +56,11 @@ public class Ros2Bridge extends IdempotentService {
 
     private final JRos2Client rosClient;
     private final RosName jointStateTopic;
-    private final RosName trajCommandTopic;
+    private final RosName actionServerName;
 
     private TopicSubscriber<JointStateMessage> subscriber;
-    private TopicSubmissionPublisher<JointTrajectoryMessage> publisher;
+    private JRosActionClient<FollowJointTrajectoryGoalMessage, FollowJointTrajectoryResultMessage>
+            actionClient;
     private volatile double[] latestJointAngles = new double[5];
 
     /**
@@ -65,7 +71,7 @@ public class Ros2Bridge extends IdempotentService {
      */
     public Ros2Bridge(String controllerName, String jointStateTopic) {
         this.jointStateTopic = new RosName(jointStateTopic);
-        this.trajCommandTopic = new RosName(controllerName).add("joint_trajectory");
+        this.actionServerName = new RosName(controllerName).add("follow_joint_trajectory");
         var configBuilder = new JRos2ClientConfiguration.Builder();
         this.rosClient = new JRos2ClientFactory().createClient(configBuilder.build());
     }
@@ -78,14 +84,24 @@ public class Ros2Bridge extends IdempotentService {
     }
 
     /**
-     * Publish a trajectory command to the arm.
+     * Send a trajectory command to the ROS 2 action server.
      *
      * @param trajectory trajectory message (must contain at least one point)
      * @throws IllegalArgumentException if the trajectory violates joint limits or format
      */
-    public void publishTrajectory(JointTrajectoryMessage trajectory) {
+    public void sendTrajectory(JointTrajectoryMessage trajectory) {
+        LOGGER.debug("Send trajectory 1");
         validateTrajectory(trajectory);
-        publisher.submit(trajectory);
+        // ← use the action client to send the goal
+        try {
+            LOGGER.debug("Send trajectory {}", trajectory);
+            actionClient
+                    .sendGoalAsync(
+                            new FollowJointTrajectoryGoalMessage().withTrajectory(trajectory))
+                    .get();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /** Basic safety validation – checks NaN/Infinity values. */
@@ -109,7 +125,11 @@ public class Ros2Bridge extends IdempotentService {
     @Override
     protected void onClose() {
         subscriber.getSubscription().ifPresent(Subscription::cancel);
-        publisher.close();
+        try {
+            actionClient.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -135,9 +155,12 @@ public class Ros2Bridge extends IdempotentService {
                 };
         rosClient.subscribe(subscriber);
 
-        publisher =
-                new TopicSubmissionPublisher<>(
-                        JointTrajectoryMessage.class, trajCommandTopic.name());
-        rosClient.publish(publisher);
+        actionClient =
+                new JRos2ActionLibFactory()
+                        .createClient(
+                                rosClient,
+                                new FollowJointTrajectoryActionDefinition(),
+                                actionServerName.name());
+        LOGGER.debug("Send trajectory 2");
     }
 }

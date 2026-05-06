@@ -19,6 +19,8 @@ package pinorobotics.cogni.tools;
 
 import dev.langchain4j.agent.tool.Tool;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
 
@@ -28,7 +30,7 @@ import pinorobotics.cogni.PoseRecord;
  * <p>The result is a list of {@link PoseRecord}
  */
 public class ListingTool {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ListingTool.class);
     private final PoseDatabase poseDatabase;
 
     /**
@@ -42,6 +44,7 @@ public class ListingTool {
 
     @Tool("List all stored labeled poses.")
     public List<PoseRecord> listLabels() {
+        LOGGER.debug("List labels");
         return poseDatabase.getSortedPoses();
     }
 }

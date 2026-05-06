@@ -26,7 +26,8 @@ eclipse {
 
 dependencies {
   implementation "io.github.lambdaprime:id.xfunction:28.0-SNAPSHOT"
-  implementation "io.github.lambdaprime:jros2client:12.0"
+  implementation "io.github.pinorobotics:jros2actionlib:6.0-SNAPSHOT"
+  implementation "io.github.pinorobotics:jros2control:2.0-SNAPSHOT"
 
   def slf4jVersion = "2.0.17"
   implementation "org.slf4j:slf4j-api:${slf4jVersion}"

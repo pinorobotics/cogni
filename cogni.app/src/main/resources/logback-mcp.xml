@@ -15,6 +15,8 @@
 			<appender name="FILE"
 				class="ch.qos.logback.core.FileAppender">
 				<file>${LOG_FILE}</file>
+				<!-- Usually, if mcp server crashes then it is automatically restarted by the client.
+					 If we disable append then all logs with crash details will be lost during such restart -->
 				<append>true</append>
 				<immediateFlush>true</immediateFlush>
 				<encoder>
@@ -38,6 +40,10 @@
 				<appender-ref ref="FILE" />
 			</logger>
 
+			<logger name="id.jrosmessages.impl" level="INFO"
+				additivity="false">
+				<appender-ref ref="FILE" />
+			</logger>
 		</then>
 		<else>
 			<appender name="CONSOLE"
@@ -53,7 +59,7 @@
 			</root>
 
 			<logger
-				name="pinorobotics.rtpstalk.impl.spec.transport.io.RtpsInputKineticStream"
+				name="pinorobotics.rtpstalk"
 				level="INFO" additivity="false">
 				<appender-ref ref="CONSOLE" />
 			</logger>
@@ -63,6 +69,10 @@
 				<appender-ref ref="CONSOLE" />
 			</logger>
 
+			<logger name="id.jrosmessages.impl" level="INFO"
+				additivity="false">
+				<appender-ref ref="CONSOLE" />
+			</logger>
 		</else>
 	</if>
 </configuration>

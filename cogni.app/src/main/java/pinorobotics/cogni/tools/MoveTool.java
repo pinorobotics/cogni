@@ -23,6 +23,8 @@ import id.jros2messages.trajectory_msgs.JointTrajectoryMessage;
 import id.jrosmessages.std_msgs.StringMessage;
 import id.jrosmessages.trajectory_msgs.JointTrajectoryPointMessage;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
 import pinorobotics.cogni.Ros2Bridge;
@@ -32,7 +34,7 @@ import pinorobotics.cogni.Ros2Bridge;
  * supplying a semantic label that was stored earlier (e.g. "light switch ON").
  */
 public class MoveTool {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoveTool.class);
     private final PoseDatabase poseDatabase;
     private final Ros2Bridge ros2Bridge;
     private StringMessage[] jointNames;
@@ -45,34 +47,38 @@ public class MoveTool {
     }
 
     /**
-     * Moves the arm to the pose identified by {@code label}.
+     * Moves the arm through the sequence of poses specified by {@code labels}.
      *
      * @param label the semantic label that was previously stored
      * @return a short status message
      */
-    @Tool("Move to the pose labeled `label`")
-    public String moveTo(@P("label") String label) {
-        // Retrieve stored pose; may be null if label does not exist
-        PoseRecord record = poseDatabase.get(label).orElse(null);
-        if (record == null) {
-            throw new IllegalArgumentException("Label '" + label + "' not found");
+    @Tool("Move robotic arm through the sequence of poses specified by `labels`")
+    public String moveTo(@P("labels") List<String> labels) {
+        for (var label : labels) {
+            LOGGER.debug("Move to label {}", label);
+            // Retrieve stored pose; may be null if label does not exist
+            PoseRecord record = poseDatabase.get(label).orElse(null);
+            if (record == null) {
+                throw new IllegalArgumentException("Label '" + label + "' not found");
+            }
+
+            // Build a trajectory message that drives the arm to the saved joint angles
+
+            var point = new JointTrajectoryPointMessage();
+            point.velocities = new double[5];
+            point.effort = new double[5];
+            point.time_from_start.sec = 2; // 2‑second travel time
+
+            // Copy the stored joint angles into the trajectory point.
+            // PoseRecord is expected to expose the five joint angles via getters.
+            point.positions = record.jointAngles();
+
+            // Send the trajectory command (the Ros2Bridge adds safety validation).
+            ros2Bridge.sendTrajectory(
+                    new JointTrajectoryMessage().withJointNames(jointNames).withPoints(point));
         }
-
-        // Build a trajectory message that drives the arm to the saved joint angles
-
-        var point = new JointTrajectoryPointMessage();
-        point.velocities = new double[5];
-        point.effort = new double[5];
-        point.time_from_start.sec = 2; // 2‑second travel time
-
-        // Copy the stored joint angles into the trajectory point.
-        // PoseRecord is expected to expose the five joint angles via getters.
-        point.positions = record.jointAngles();
-
-        // Publish the trajectory command (the Ros2Bridge adds safety validation).
-        ros2Bridge.publishTrajectory(
-                new JointTrajectoryMessage().withJointNames(jointNames).withPoints(point));
-
-        return "Moving to stored pose: " + record;
+        return labels.size() == 1
+                ? "Moved to stored pose: " + labels.getFirst()
+                : "Moved through the sequence of poses: " + labels;
     }
 }

@@ -19,6 +19,8 @@ package pinorobotics.cogni.tools;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
 import pinorobotics.cogni.Ros2Bridge;
@@ -31,7 +33,7 @@ import pinorobotics.cogni.Ros2Bridge;
  * persists it via the {@link PoseDatabase}.
  */
 public class LabelingTool {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(LabelingTool.class);
     private final PoseDatabase poseDatabase;
     private final Ros2Bridge rosBridge;
 
@@ -46,8 +48,11 @@ public class LabelingTool {
      * @param label a human‑readable identifier (e.g. “light switch ON”)
      * @return a confirmation message for the user
      */
-    @Tool("Store the current robot configuration under a semantic label")
+    @Tool(
+            "Store the current robot configuration under a semantic label and return all joint"
+                    + " angles for it.")
     public String storePose(@P("label") String label) {
+        LOGGER.debug("Save label {}", label);
         // 1️⃣  Obtain the latest joint angles from the ROS‑2 bridge.
         double[] currentAngles = rosBridge.getCurrentJointAngles();
 
