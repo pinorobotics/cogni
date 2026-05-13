@@ -109,8 +109,8 @@ public class CogniApp {
         PoseDatabase poseDb = new PoseDatabase();
         Ros2Bridge ros =
                 new Ros2Bridge(
-                        options.getRequiredOption("controllerName"),
-                        options.getOption("jointStateTopic")
+                        options.getRequiredOption(CogniOptions.CONTROLLER_NAME),
+                        options.getOption(CogniOptions.JOINT_STATE_TOPIC)
                                 .orElse(CogniOptions.DEFAULT_JOINT_STATE_TOPIC));
         ros.start();
         McpServer server =

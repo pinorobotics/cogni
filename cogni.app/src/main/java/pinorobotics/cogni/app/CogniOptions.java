@@ -24,6 +24,8 @@ public interface CogniOptions {
     String ACTION = "action";
     String START_MCP = "startMcp";
     String LOG_FILE = "logFile";
+    String CONTROLLER_NAME = "controllerName";
+    String JOINT_STATE_TOPIC = "jointStateTopic";
 
     String DEFAULT_JOINT_STATE_TOPIC = "joint_states";
 }
