@@ -35,14 +35,14 @@ import pinorobotics.cogni.Ros2Bridge;
  */
 public class MoveTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(MoveTool.class);
-    private final PoseDatabase poseDatabase;
+    private final PoseDatabase db;
     private final Ros2Bridge ros2Bridge;
     private StringMessage[] jointNames;
 
     public MoveTool(List<String> jointNames, PoseDatabase poseDatabase, Ros2Bridge ros2Bridge) {
         this.jointNames =
                 jointNames.stream().map(StringMessage::new).toArray(s -> new StringMessage[s]);
-        this.poseDatabase = poseDatabase;
+        this.db = poseDatabase;
         this.ros2Bridge = ros2Bridge;
     }
 
@@ -57,7 +57,7 @@ public class MoveTool {
         for (var label : labels) {
             LOGGER.debug("Move to label {}", label);
             // Retrieve stored pose; may be null if label does not exist
-            PoseRecord record = poseDatabase.get(label).orElse(null);
+            PoseRecord record = db.findPose(label).orElse(null);
             if (record == null) {
                 throw new IllegalArgumentException("Label '" + label + "' not found");
             }

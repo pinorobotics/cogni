@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * In-memory database for storing and retrieving pose labels and their corresponding joint states.
@@ -39,15 +38,14 @@ public final class PoseDatabase {
     /**
      * Adds a new pose to the database.
      *
-     * @param label The label for the pose
      * @param poseRecord The pose record to store
      * @throws IllegalStateException if the database is full
      */
-    public void add(String label, PoseRecord poseRecord) {
+    public void addPose(PoseRecord poseRecord) {
         if (entries.size() >= MAX_ENTRIES) {
             throw new IllegalStateException("Maximum number of stored poses reached");
         }
-        entries.put(label, poseRecord);
+        entries.put(poseRecord.label(), poseRecord);
     }
 
     /**
@@ -56,17 +54,8 @@ public final class PoseDatabase {
      * @param label The label of the pose to retrieve
      * @return Optional containing the pose record if found, empty otherwise
      */
-    public Optional<PoseRecord> get(String label) {
+    public Optional<PoseRecord> findPose(String label) {
         return Optional.ofNullable(entries.get(label));
-    }
-
-    /**
-     * Lists all available pose labels.
-     *
-     * @return Set of all pose labels
-     */
-    public Set<String> listLabels() {
-        return entries.keySet();
     }
 
     /**
@@ -115,15 +104,6 @@ public final class PoseDatabase {
      */
     public boolean containsLabel(String label) {
         return entries.containsKey(label);
-    }
-
-    /**
-     * Gets all pose labels as a sorted list.
-     *
-     * @return Sorted list of pose labels
-     */
-    public List<String> getSortedLabels() {
-        return entries.keySet().stream().sorted().toList();
     }
 
     public List<PoseRecord> getSortedPoses() {

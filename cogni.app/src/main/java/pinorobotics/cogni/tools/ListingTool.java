@@ -31,7 +31,7 @@ import pinorobotics.cogni.PoseRecord;
  */
 public class ListingTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(ListingTool.class);
-    private final PoseDatabase poseDatabase;
+    private final PoseDatabase db;
 
     /**
      * Creates a new {@code ListingTool}.
@@ -39,12 +39,12 @@ public class ListingTool {
      * @param poseDatabase the store of pose records
      */
     public ListingTool(PoseDatabase poseDatabase) {
-        this.poseDatabase = poseDatabase;
+        this.db = poseDatabase;
     }
 
     @Tool("List all stored labeled poses.")
     public List<PoseRecord> listLabels() {
         LOGGER.debug("List labels");
-        return poseDatabase.getSortedPoses();
+        return db.getSortedPoses();
     }
 }

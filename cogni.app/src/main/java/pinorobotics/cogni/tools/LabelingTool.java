@@ -34,11 +34,11 @@ import pinorobotics.cogni.Ros2Bridge;
  */
 public class LabelingTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(LabelingTool.class);
-    private final PoseDatabase poseDatabase;
+    private final PoseDatabase db;
     private final Ros2Bridge rosBridge;
 
     public LabelingTool(PoseDatabase poseDatabase, Ros2Bridge rosBridge) {
-        this.poseDatabase = poseDatabase;
+        this.db = poseDatabase;
         this.rosBridge = rosBridge;
     }
 
@@ -60,7 +60,7 @@ public class LabelingTool {
         PoseRecord record = new PoseRecord(label, currentAngles);
 
         // 3️⃣  Persist the pose (the database overwrites an existing label if needed).
-        poseDatabase.add(label, record);
+        db.addPose(record);
 
         // 4️⃣  Return a friendly confirmation.
         return "Stored pose " + record;
