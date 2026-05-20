@@ -34,15 +34,20 @@ Download the latest [release version](cogni.app/release/CHANGELOG.md) and extrac
 
 # Understanding the CLI Options
 
-Cogni is started with the **startMcp** action. All other flags are optional configuration parameters.
+Required options:
 
 | Option | Description |
 |--------|-------------|
 | -action | Must be **~startMcp~** (the only supported action for now).|
-| -logFile | Path to output log file (optional). |
-| -controllerName | Name of the ROS2 joint_trajectory_controller (default `dorna2_arm_controller`). |
-| -jointStateTopic | ROS2 topic to subscribe to for joint states (defaults to `/joint_states`). |
-| -h | Show help and exit. |
+| -controllerName | Name of the ROS2 `joint_trajectory_controller`. |
+
+Non-required:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| -logFile | Path to output log file. | Logs are sent to stdout. |
+| -jointStateTopic | ROS2 topic to subscribe to for joint states. | `/joint_states` |
+| -h | Show help and exit. | X |
 
 When Cogni starts it discovers ROS2 `joint_trajectory_controller` Action server where it will submit  movement commands and separately it subscribes to the selected joint states topic (eg. `/joint_states`).
 
