@@ -22,11 +22,13 @@ import dev.langchain4j.agent.tool.Tool;
 import id.jros2messages.trajectory_msgs.JointTrajectoryMessage;
 import id.jrosmessages.std_msgs.StringMessage;
 import id.jrosmessages.trajectory_msgs.JointTrajectoryPointMessage;
+import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
+import pinorobotics.cogni.PoseSample;
 import pinorobotics.cogni.Ros2Bridge;
 
 /**
@@ -80,5 +82,45 @@ public class MoveTool {
         return labels.size() == 1
                 ? "Moved to stored pose: " + labels.getFirst()
                 : "Moved through the sequence of poses: " + labels;
+    }
+
+    /**
+     * Replays a previously recorded trajectory identified by its label.
+     *
+     * @param label the semantic label of the saved trajectory
+     * @return a short status message
+     */
+    @Tool("Replay a stored trajectory")
+    public String replay(@P("label") String label) {
+        LOGGER.debug("Replaying trajectory label {}", label);
+        var trajectory = db.findTrajectory(label).orElse(null);
+        if (trajectory == null)
+            throw new IllegalArgumentException("Trajectory label '" + label + "' not found");
+
+        // Build a ROS2 JointTrajectory message containing all points of the trajectory
+        var points = new ArrayList<JointTrajectoryPointMessage>();
+        int index = 0;
+        for (PoseSample poseSample : trajectory.poses()) {
+            JointTrajectoryPointMessage point = new JointTrajectoryPointMessage();
+            // Retrieve stored joint angles
+            double[] angles = poseSample.jointAngles();
+            point.positions = angles;
+            point.velocities = new double[5];
+            point.effort = new double[5];
+            // Simple incremental timing – 2 seconds per point
+            point.time_from_start.sec = (index + 1) * 2;
+            points.add(point);
+            index++;
+        }
+
+        JointTrajectoryMessage trajectoryMsg =
+                new JointTrajectoryMessage()
+                        .withJointNames(jointNames)
+                        .withPoints(points.toArray(new JointTrajectoryPointMessage[0]));
+
+        // Send the trajectory to the arm
+        ros2Bridge.sendTrajectory(trajectoryMsg);
+
+        return "Replayed trajectory: " + label;
     }
 }

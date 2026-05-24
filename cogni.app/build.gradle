@@ -39,7 +39,10 @@ dependencies {
 
   def lang4jVersion="1.13.0";
   implementation "dev.langchain4j:langchain4j-community-mcp-server:${lang4jVersion}-beta23"
-
+  
+  def jacksonVersion="2.18.0";
+  implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+  implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
 }
 
 configurations {

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
+import pinorobotics.cogni.TrajectoryRecord;
 
 /**
  * Tool that lists all stored poses.
@@ -42,9 +43,15 @@ public class ListingTool {
         this.db = poseDatabase;
     }
 
-    @Tool("List all stored labeled poses.")
-    public List<PoseRecord> listLabels() {
-        LOGGER.debug("List labels");
+    @Tool("List all stored poses.")
+    public List<PoseRecord> listPoses() {
+        LOGGER.debug("List poses");
         return db.getSortedPoses();
+    }
+
+    @Tool("List all stored trajectories.")
+    public List<TrajectoryRecord> listTrajectories() {
+        LOGGER.debug("List trajectories");
+        return db.getSortedTrajectories();
     }
 }

@@ -1,0 +1,4 @@
+mcpServers:
+  cogni:
+    command: ../../cogni
+    args: [-action=startMcp, -logFile=/tmp/cogni.log, -r2d2, -controllerName=r2d2]

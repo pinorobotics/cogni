@@ -19,32 +19,35 @@ package pinorobotics.cogni;
 
 import id.xfunction.XJson;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
- * Immutable record representing a stored pose for the robotic arm. Contains the joint angles and a
- * human-readable label for the pose.
+ * Immutable record representing a single pose for the robotic arm.
+ *
+ * @author aeon_flux aeon_flux@eclipso.ch
  */
-public record PoseRecord(String label, PoseSample sample) {
+public record PoseSample(Instant timestamp, double... jointAngles) {
 
     /**
-     * Creates a new PoseRecord with the given label and joint angles.
+     * Validates that the joint angles array has exactly 5 elements (for a 5-DoF arm).
      *
-     * @param label The human-readable name for this pose
-     * @param jointAngles Array of 5 double values representing joint positions
-     * @return New PoseRecord instance
+     * @throws IllegalArgumentException if the joint angles array is null or has incorrect size
      */
-    public static PoseRecord of(String label, double[] jointAngles) {
-        return new PoseRecord(label, new PoseSample(Instant.now(), jointAngles));
+    public PoseSample {
+        Objects.requireNonNull(jointAngles, "Joint angles cannot be null");
+        if (jointAngles.length != 5) {
+            throw new IllegalArgumentException("Expected 5 joint angles for a 5-DoF arm");
+        }
+    }
+
+    public PoseSample(double... jointAngles) {
+        this(Instant.now(), jointAngles);
     }
 
     @Override
     public String toString() {
         return XJson.asString(
-                "label", label,
-                "sample", sample);
-    }
-
-    public double[] jointAngles() {
-        return sample.jointAngles();
+                "timestamp", timestamp,
+                "jointAngles", jointAngles);
     }
 }

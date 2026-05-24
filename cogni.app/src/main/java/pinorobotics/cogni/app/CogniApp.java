@@ -25,6 +25,7 @@ import dev.langchain4j.community.mcp.server.transport.StdioMcpServerTransport;
 import dev.langchain4j.mcp.protocol.McpImplementation;
 import id.xfunction.cli.CommandOptions;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.Ros2Bridge;
+import pinorobotics.cogni.tools.HandTeachingTool;
 import pinorobotics.cogni.tools.LabelingTool;
 import pinorobotics.cogni.tools.ListingTool;
 import pinorobotics.cogni.tools.MoveTool;
@@ -113,19 +115,26 @@ public class CogniApp {
                         options.getOption(CogniOptions.JOINT_STATE_TOPIC)
                                 .orElse(CogniOptions.DEFAULT_JOINT_STATE_TOPIC));
         ros.start();
-        McpServer server =
-                new McpServer(
-                        List.of(
-                                new LabelingTool(poseDb, ros),
-                                new ListingTool(poseDb),
-                                // TODO
-                                new MoveTool(
-                                        List.of(
-                                                "Joint_0", "Joint_1", "Joint_2", "Joint_3",
-                                                "Joint_4"),
-                                        poseDb,
-                                        ros)),
-                        serverInfo);
+        var tools = new ArrayList<>();
+        tools.add(new LabelingTool(poseDb, ros));
+        tools.add(new ListingTool(poseDb));
+        // TODO
+        tools.add(
+                new MoveTool(
+                        List.of("Joint_0", "Joint_1", "Joint_2", "Joint_3", "Joint_4"),
+                        poseDb,
+                        ros));
+        if (options.isOptionTrue(CogniOptions.R2D2_CONTROLLER))
+            tools.add(
+                    new HandTeachingTool(
+                            poseDb,
+                            ros,
+                            options.getOptionMillis(
+                                            CogniOptions.HAND_TEACHING_CAPTURE_RATE_IN_MILLIS)
+                                    .orElse(
+                                            CogniOptions
+                                                    .DEFAULT_HAND_TEACHING_CAPTURE_RATE_IN_MILLIS)));
+        McpServer server = new McpServer(tools, serverInfo);
         setupMcpLogging();
         new StdioMcpServerTransport(System.in, System.out, server).awaitClose();
     }

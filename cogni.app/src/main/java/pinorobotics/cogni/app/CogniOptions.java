@@ -17,15 +17,20 @@
  */
 package pinorobotics.cogni.app;
 
+import java.time.Duration;
+
 /**
  * @author aeon aeon_flux@eclipso.ch
  */
 public interface CogniOptions {
     String ACTION = "action";
     String START_MCP = "startMcp";
+    String R2D2_CONTROLLER = "r2d2";
     String LOG_FILE = "logFile";
     String CONTROLLER_NAME = "controllerName";
     String JOINT_STATE_TOPIC = "jointStateTopic";
+    String HAND_TEACHING_CAPTURE_RATE_IN_MILLIS = "handTeachingCaptureRate";
 
     String DEFAULT_JOINT_STATE_TOPIC = "joint_states";
+    Duration DEFAULT_HAND_TEACHING_CAPTURE_RATE_IN_MILLIS = Duration.ofMillis(500);
 }

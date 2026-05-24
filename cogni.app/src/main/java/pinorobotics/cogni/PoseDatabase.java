@@ -27,13 +27,8 @@ import java.util.Optional;
  * In-memory database for storing and retrieving pose labels and their corresponding joint states.
  */
 public final class PoseDatabase {
-    private static final int MAX_ENTRIES = 100;
-    private final Map<String, PoseRecord> entries;
-
-    /** Creates a new PoseDatabase instance. */
-    public PoseDatabase() {
-        this.entries = new HashMap<>();
-    }
+    private final Map<String, PoseRecord> entries = new HashMap<>();
+    private final Map<String, TrajectoryRecord> trajectoryStore = new HashMap<>();
 
     /**
      * Adds a new pose to the database.
@@ -42,9 +37,6 @@ public final class PoseDatabase {
      * @throws IllegalStateException if the database is full
      */
     public void addPose(PoseRecord poseRecord) {
-        if (entries.size() >= MAX_ENTRIES) {
-            throw new IllegalStateException("Maximum number of stored poses reached");
-        }
         entries.put(poseRecord.label(), poseRecord);
     }
 
@@ -59,54 +51,43 @@ public final class PoseDatabase {
     }
 
     /**
-     * Updates an existing pose.
+     * Adds a new trajectory to the database.
      *
-     * @param label The label of the pose to update
-     * @param newPoseRecord The new pose record
-     * @throws IllegalArgumentException if the label doesn't exist
+     * @param trajectoryRecord The trajectory record to store
+     * @throws IllegalStateException if the database is full
      */
-    public void update(String label, PoseRecord newPoseRecord) {
-        if (!entries.containsKey(label)) {
-            throw new IllegalArgumentException("Label '" + label + "' not found");
-        }
-        entries.put(label, newPoseRecord);
+    public void addTrajectory(TrajectoryRecord trajectoryRecord) {
+        trajectoryStore.put(trajectoryRecord.label(), trajectoryRecord);
     }
 
     /**
-     * Removes a pose by its label.
+     * Retrieves a trajectory by its label.
      *
-     * @param label The label of the pose to remove
-     * @return true if the pose was removed, false if it didn't exist
+     * @param label The label of the trajectory to retrieve
+     * @return Optional containing the trajectory record if found, empty otherwise
      */
-    public boolean remove(String label) {
-        return entries.remove(label) != null;
-    }
-
-    /**
-     * Gets the current size of the database.
-     *
-     * @return Number of entries in the database
-     */
-    public int size() {
-        return entries.size();
+    public Optional<TrajectoryRecord> findTrajectory(String label) {
+        return Optional.ofNullable(trajectoryStore.get(label));
     }
 
     /** Clears all entries from the database. */
     public void clear() {
         entries.clear();
-    }
-
-    /**
-     * Checks if the database contains a specific label.
-     *
-     * @param label The label to check
-     * @return true if the label exists, false otherwise
-     */
-    public boolean containsLabel(String label) {
-        return entries.containsKey(label);
+        trajectoryStore.clear();
     }
 
     public List<PoseRecord> getSortedPoses() {
         return entries.values().stream().sorted(Comparator.comparing(PoseRecord::label)).toList();
+    }
+
+    /**
+     * Gets all trajectories sorted by label.
+     *
+     * @return List of trajectory records sorted by label
+     */
+    public List<TrajectoryRecord> getSortedTrajectories() {
+        return trajectoryStore.values().stream()
+                .sorted(Comparator.comparing(TrajectoryRecord::label))
+                .toList();
     }
 }

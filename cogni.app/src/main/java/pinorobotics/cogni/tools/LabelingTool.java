@@ -57,7 +57,7 @@ public class LabelingTool {
         double[] currentAngles = rosBridge.getCurrentJointAngles();
 
         // 2️⃣  Build a PoseRecord containing the label and the joint values.
-        PoseRecord record = new PoseRecord(label, currentAngles);
+        PoseRecord record = PoseRecord.of(label, currentAngles);
 
         // 3️⃣  Persist the pose (the database overwrites an existing label if needed).
         db.addPose(record);

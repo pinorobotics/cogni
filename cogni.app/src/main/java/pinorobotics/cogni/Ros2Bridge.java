@@ -26,7 +26,10 @@ import id.jrosclient.TopicSubscriber;
 import id.jroscommon.RosName;
 import id.jrosmessages.trajectory_msgs.JointTrajectoryPointMessage;
 import id.xfunction.Preconditions;
+import id.xfunction.retry.RetryException;
+import id.xfunction.retry.RetryableExecutor;
 import id.xfunction.util.IdempotentService;
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow.Subscription;
 import org.slf4j.Logger;
@@ -35,7 +38,12 @@ import pinorobotics.jros2actionlib.JRos2ActionLibFactory;
 import pinorobotics.jros2control.control_msgs.FollowJointTrajectoryActionDefinition;
 import pinorobotics.jros2control.control_msgs.FollowJointTrajectoryGoalMessage;
 import pinorobotics.jros2control.control_msgs.FollowJointTrajectoryResultMessage;
+import pinorobotics.jros2services.JRos2ServiceClient;
+import pinorobotics.jros2services.JRos2ServicesFactory;
 import pinorobotics.jrosactionlib.JRosActionClient;
+import pinorobotics.jrosservices.std_srvs.TriggerRequestMessage;
+import pinorobotics.jrosservices.std_srvs.TriggerResponseMessage;
+import pinorobotics.jrosservices.std_srvs.TriggerServiceDefinition;
 
 /**
  * Bridge to ROS 2 for the Cogni AI‑powered robotic arm.
@@ -57,10 +65,12 @@ public class Ros2Bridge extends IdempotentService {
     private final JRos2Client rosClient;
     private final RosName jointStateTopic;
     private final RosName actionServerName;
+    private final RosName motorTriggerService;
 
     private TopicSubscriber<JointStateMessage> subscriber;
     private JRosActionClient<FollowJointTrajectoryGoalMessage, FollowJointTrajectoryResultMessage>
             actionClient;
+    private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> motorServiceClient;
     private volatile double[] latestJointAngles = new double[5];
 
     /**
@@ -71,7 +81,11 @@ public class Ros2Bridge extends IdempotentService {
      */
     public Ros2Bridge(String controllerName, String jointStateTopic) {
         this.jointStateTopic = new RosName(jointStateTopic);
-        this.actionServerName = new RosName(controllerName).add("follow_joint_trajectory");
+        this.actionServerName =
+                new RosName(controllerName)
+                        .add("trajectory_controller")
+                        .add("follow_joint_trajectory");
+        this.motorTriggerService = new RosName(controllerName).add("motor_trigger_service");
         var configBuilder = new JRos2ClientConfiguration.Builder();
         this.rosClient = new JRos2ClientFactory().createClient(configBuilder.build());
     }
@@ -104,6 +118,29 @@ public class Ros2Bridge extends IdempotentService {
         }
     }
 
+    public void startMotors(boolean isOn) {
+        // Build request (TriggerRequestMessage has no fields)
+        var request = new TriggerRequestMessage();
+
+        new RetryableExecutor()
+                .retry(
+                        () -> {
+                            try {
+                                // Send request and wait for completion
+                                var response = motorServiceClient.sendRequestAsync(request).get();
+                                LOGGER.debug("Trigger service response: {}", response);
+                                Preconditions.isTrue(response.success);
+                                Preconditions.equals(response.message.data, "Motor isOn=" + isOn);
+                                return null;
+                            } catch (Exception e) {
+                                LOGGER.warn(e.getMessage());
+                                throw new RetryException(e);
+                            }
+                        },
+                        Duration.ofMillis(500),
+                        3);
+    }
+
     /** Basic safety validation – checks NaN/Infinity values. */
     private void validateTrajectory(JointTrajectoryMessage trajectory) {
         JointTrajectoryPointMessage[] points = trajectory.points;
@@ -126,6 +163,7 @@ public class Ros2Bridge extends IdempotentService {
     protected void onClose() {
         subscriber.getSubscription().ifPresent(Subscription::cancel);
         try {
+            motorServiceClient.close();
             actionClient.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -161,6 +199,11 @@ public class Ros2Bridge extends IdempotentService {
                                 rosClient,
                                 new FollowJointTrajectoryActionDefinition(),
                                 actionServerName.name());
-        LOGGER.debug("Send trajectory 2");
+
+        // Use the TriggerServiceDefinition to issue a trigger request
+        var triggerServiceDefinition = new TriggerServiceDefinition();
+        motorServiceClient =
+                new JRos2ServicesFactory()
+                        .createClient(rosClient, triggerServiceDefinition, motorTriggerService);
     }
 }
