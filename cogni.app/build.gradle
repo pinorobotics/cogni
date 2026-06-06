@@ -43,6 +43,11 @@ dependencies {
   def jacksonVersion="2.18.0";
   implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
   implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+
+  def hibernateVersion = "6.6.33.Final"
+  implementation "org.hibernate.orm:hibernate-core:${hibernateVersion}"
+  implementation "org.hibernate.orm:hibernate-community-dialects:${hibernateVersion}"
+  implementation "org.xerial:sqlite-jdbc:3.53.1.0"
 }
 
 configurations {

@@ -1,1 +1,2 @@
 include 'cogni.app'
+include 'cogni.tests'

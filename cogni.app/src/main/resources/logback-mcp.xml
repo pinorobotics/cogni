@@ -44,6 +44,11 @@
 				additivity="false">
 				<appender-ref ref="FILE" />
 			</logger>
+
+			<logger name="org.hibernate.jpa" level="INFO"
+				additivity="false">
+				<appender-ref ref="FILE" />
+			</logger>
 		</then>
 		<else>
 			<appender name="CONSOLE"
@@ -70,6 +75,11 @@
 			</logger>
 
 			<logger name="id.jrosmessages.impl" level="INFO"
+				additivity="false">
+				<appender-ref ref="CONSOLE" />
+			</logger>
+			
+			<logger name="org.hibernate.jpa" level="INFO"
 				additivity="false">
 				<appender-ref ref="CONSOLE" />
 			</logger>

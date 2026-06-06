@@ -54,8 +54,8 @@ public class MoveTool {
      * @param label the semantic label that was previously stored
      * @return a short status message
      */
-    @Tool("Move robotic arm through the sequence of poses specified by `labels`")
-    public String moveTo(@P("labels") List<String> labels) {
+    @Tool("Move robotic arm through the sequence of poses specified by labels")
+    public String moveTo(@P("list of labels") List<String> labels) {
         for (var label : labels) {
             LOGGER.debug("Move to label {}", label);
             // Retrieve stored pose; may be null if label does not exist

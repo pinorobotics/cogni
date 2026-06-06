@@ -17,79 +17,62 @@
  */
 package pinorobotics.cogni.db;
 
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import pinorobotics.cogni.PoseRecord;
 import pinorobotics.cogni.TrajectoryRecord;
 
 /**
- * In-memory database for storing and retrieving pose labels and their corresponding joint states.
+ * Core contract for pose and trajectory persistence.
+ *
+ * <p>The implementation can be in‑memory or persisted via JPA (SQLite). All methods are
+ * deliberately simple and thread‑safe.
+ *
+ * @author aeon aeon_flux@eclipso.ch
  */
-public final class PoseDatabase {
-    private final Map<String, PoseRecord> entries = new HashMap<>();
-    private final Map<String, TrajectoryRecord> trajectoryStore = new HashMap<>();
+public interface PoseDatabase {
 
     /**
-     * Adds a new pose to the database.
+     * Stores or updates a pose record.
      *
-     * @param poseRecord The pose record to store
-     * @throws IllegalStateException if the database is full
+     * @param pose the record to store; label must be non‑null and not empty
      */
-    public void addPose(PoseRecord poseRecord) {
-        entries.put(poseRecord.label(), poseRecord);
-    }
+    void addPose(PoseRecord pose);
+
+    /**
+     * Stores or updates a trajectory record.
+     *
+     * @param trajectory the record to store; trajectory label must be unique
+     */
+    void addTrajectory(TrajectoryRecord trajectory);
 
     /**
      * Retrieves a pose by its label.
      *
-     * @param label The label of the pose to retrieve
-     * @return Optional containing the pose record if found, empty otherwise
+     * @param label the label to look up
+     * @return an {@link Optional} containing the {@link PoseRecord} if present
      */
-    public Optional<PoseRecord> findPose(String label) {
-        return Optional.ofNullable(entries.get(label));
-    }
-
-    /**
-     * Adds a new trajectory to the database.
-     *
-     * @param trajectoryRecord The trajectory record to store
-     * @throws IllegalStateException if the database is full
-     */
-    public void addTrajectory(TrajectoryRecord trajectoryRecord) {
-        trajectoryStore.put(trajectoryRecord.label(), trajectoryRecord);
-    }
+    Optional<PoseRecord> findPose(String label);
 
     /**
      * Retrieves a trajectory by its label.
      *
-     * @param label The label of the trajectory to retrieve
-     * @return Optional containing the trajectory record if found, empty otherwise
+     * @param label the label to look up
+     * @return an {@link Optional} containing the {@link TrajectoryRecord} if present
      */
-    public Optional<TrajectoryRecord> findTrajectory(String label) {
-        return Optional.ofNullable(trajectoryStore.get(label));
-    }
-
-    /** Clears all entries from the database. */
-    public void clear() {
-        entries.clear();
-        trajectoryStore.clear();
-    }
-
-    public List<PoseRecord> getSortedPoses() {
-        return entries.values().stream().sorted(Comparator.comparing(PoseRecord::label)).toList();
-    }
+    Optional<TrajectoryRecord> findTrajectory(String label);
 
     /**
-     * Gets all trajectories sorted by label.
+     * Returns all stored pose records sorted by their label.
      *
-     * @return List of trajectory records sorted by label
+     * @return an immutable list of pose records
      */
-    public List<TrajectoryRecord> getSortedTrajectories() {
-        return trajectoryStore.values().stream()
-                .sorted(Comparator.comparing(TrajectoryRecord::label))
-                .toList();
-    }
+    List<PoseRecord> getSortedPoses();
+
+    /**
+     * Returns all stored trajectory records sorted by their label.
+     *
+     * @return an immutable list of trajectory records
+     */
+    List<TrajectoryRecord> getSortedTrajectories();
 }

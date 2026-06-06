@@ -24,6 +24,7 @@ import dev.langchain4j.community.mcp.server.McpServer;
 import dev.langchain4j.community.mcp.server.transport.StdioMcpServerTransport;
 import dev.langchain4j.mcp.protocol.McpImplementation;
 import id.xfunction.cli.CommandOptions;
+import id.xfunction.nio.file.XPaths;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import pinorobotics.cogni.Ros2Bridge;
+import pinorobotics.cogni.db.InMemoryPoseDatabase;
 import pinorobotics.cogni.db.PoseDatabase;
+import pinorobotics.cogni.db.persistent.SqlitePoseDatabase;
 import pinorobotics.cogni.tools.HandTeachingTool;
 import pinorobotics.cogni.tools.LabelingTool;
 import pinorobotics.cogni.tools.ListingTool;
@@ -93,7 +96,7 @@ public class CogniApp {
             LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
             context.reset();
             JoranConfigurator configurator = new JoranConfigurator();
-            options.getOption(CogniOptions.LOG_FILE)
+            options.getOption(CogniOptions.LOG_PATH)
                     .ifPresent(logFile -> System.setProperty("LOG_FILE", logFile));
             configurator.setContext(context);
             configurator.doConfigure(CogniApp.class.getResourceAsStream("/logback-mcp.xml"));
@@ -108,7 +111,11 @@ public class CogniApp {
         McpImplementation serverInfo = new McpImplementation();
         serverInfo.setName("cogni-mcp-server");
 
-        PoseDatabase poseDb = new PoseDatabase();
+        PoseDatabase poseDb =
+                options.getOption(CogniOptions.DB_PATH)
+                        .map(XPaths::resolveHome)
+                        .<PoseDatabase>map(SqlitePoseDatabase::new)
+                        .orElse(new InMemoryPoseDatabase());
         Ros2Bridge ros =
                 new Ros2Bridge(
                         options.getRequiredOption(CogniOptions.CONTROLLER_NAME),
