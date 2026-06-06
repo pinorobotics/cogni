@@ -26,10 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
 import pinorobotics.cogni.PoseSample;
 import pinorobotics.cogni.Ros2Bridge;
+import pinorobotics.cogni.db.PoseDatabase;
 
 /**
  * Tool that moves the robotic arm to a previously stored pose. The LLM invokes this tool by

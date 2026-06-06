@@ -21,9 +21,9 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
 import pinorobotics.cogni.Ros2Bridge;
+import pinorobotics.cogni.db.PoseDatabase;
 
 /**
  * Tool that stores the current robot configuration under a semantic label.

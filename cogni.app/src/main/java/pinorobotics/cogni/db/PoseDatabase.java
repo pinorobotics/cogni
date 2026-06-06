@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pinorobotics.cogni;
+package pinorobotics.cogni.db;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import pinorobotics.cogni.PoseRecord;
+import pinorobotics.cogni.TrajectoryRecord;
 
 /**
  * In-memory database for storing and retrieving pose labels and their corresponding joint states.

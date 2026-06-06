@@ -26,10 +26,10 @@ import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseSample;
 import pinorobotics.cogni.Ros2Bridge;
 import pinorobotics.cogni.TrajectoryRecord;
+import pinorobotics.cogni.db.PoseDatabase;
 
 /**
  * @author aeon_flux aeon_flux@eclipso.ch

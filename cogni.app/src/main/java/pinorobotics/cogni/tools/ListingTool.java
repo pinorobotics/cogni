@@ -21,9 +21,9 @@ import dev.langchain4j.agent.tool.Tool;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pinorobotics.cogni.PoseDatabase;
 import pinorobotics.cogni.PoseRecord;
 import pinorobotics.cogni.TrajectoryRecord;
+import pinorobotics.cogni.db.PoseDatabase;
 
 /**
  * Tool that lists all stored poses.
