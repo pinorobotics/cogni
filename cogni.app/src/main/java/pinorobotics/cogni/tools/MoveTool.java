@@ -22,6 +22,7 @@ import dev.langchain4j.agent.tool.Tool;
 import id.jros2messages.trajectory_msgs.JointTrajectoryMessage;
 import id.jrosmessages.std_msgs.StringMessage;
 import id.jrosmessages.trajectory_msgs.JointTrajectoryPointMessage;
+import id.xfunction.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -91,7 +92,8 @@ public class MoveTool {
      * @return a short status message
      */
     @Tool("Replay a stored trajectory")
-    public String replay(@P("label") String label) {
+    public String replay(@P("trajectory label") String label) {
+        Preconditions.notNull(label);
         LOGGER.debug("Replaying trajectory label {}", label);
         var trajectory = db.findTrajectory(label).orElse(null);
         if (trajectory == null)
@@ -99,18 +101,14 @@ public class MoveTool {
 
         // Build a ROS2 JointTrajectory message containing all points of the trajectory
         var points = new ArrayList<JointTrajectoryPointMessage>();
-        int index = 0;
         for (PoseSample poseSample : trajectory.poses()) {
             JointTrajectoryPointMessage point = new JointTrajectoryPointMessage();
-            // Retrieve stored joint angles
-            double[] angles = poseSample.jointAngles();
-            point.positions = angles;
+            point.positions = poseSample.jointAngles();
             point.velocities = new double[5];
             point.effort = new double[5];
             // Simple incremental timing – 2 seconds per point
-            point.time_from_start.sec = (index + 1) * 2;
+            point.time_from_start.sec = (int) poseSample.timestamp().getEpochSecond();
             points.add(point);
-            index++;
         }
 
         JointTrajectoryMessage trajectoryMsg =
@@ -121,6 +119,7 @@ public class MoveTool {
         // Send the trajectory to the arm
         ros2Bridge.sendTrajectory(trajectoryMsg);
 
-        return "Replayed trajectory: " + label;
+        return "Replayed trajectory '%s' with %d points"
+                .formatted(label, trajectoryMsg.points.length);
     }
 }

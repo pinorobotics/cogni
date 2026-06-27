@@ -17,7 +17,6 @@
  */
 package pinorobotics.cogni;
 
-import id.xfunction.XJson;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,8 +45,16 @@ public record TrajectoryRecord(String label, List<PoseSample> poses) {
 
     @Override
     public String toString() {
-        return XJson.asString(
-                "label", label,
-                "poses", poses);
+        return """
+        {
+          "label": %s,
+          "first": %s,
+          "last": %s
+        }
+        """
+                .formatted(
+                        label,
+                        poses.size() < 1 ? "none" : poses.getFirst(),
+                        poses.size() < 1 ? "none" : poses.getLast());
     }
 }

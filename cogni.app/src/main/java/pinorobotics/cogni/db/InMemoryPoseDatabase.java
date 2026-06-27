@@ -36,12 +36,19 @@ public class InMemoryPoseDatabase implements PoseDatabase {
     private final Map<String, TrajectoryRecord> trajectoryStore = new HashMap<>();
 
     @Override
-    public void addPose(PoseRecord pose) {
+    public void addPose(PoseRecord pose) throws LabelExistsException {
+        if (store.containsKey(pose.label())) {
+            throw new LabelExistsException("Pose with label '" + pose.label() + "' already exists");
+        }
         store.put(pose.label(), pose);
     }
 
     @Override
-    public void addTrajectory(TrajectoryRecord trajectory) {
+    public void addTrajectory(TrajectoryRecord trajectory) throws LabelExistsException {
+        if (trajectoryStore.containsKey(trajectory.label())) {
+            throw new LabelExistsException(
+                    "Trajectory with label '" + trajectory.label() + "' already exists");
+        }
         trajectoryStore.put(trajectory.label(), trajectory);
     }
 
@@ -67,5 +74,15 @@ public class InMemoryPoseDatabase implements PoseDatabase {
         List<TrajectoryRecord> list = new ArrayList<>(trajectoryStore.values());
         list.sort((t1, t2) -> t1.label().compareTo(t2.label()));
         return Collections.unmodifiableList(list);
+    }
+
+    @Override
+    public void deletePose(String label) {
+        store.remove(label);
+    }
+
+    @Override
+    public void deleteTrajectory(String label) {
+        trajectoryStore.remove(label);
     }
 }

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseSample;
 import pinorobotics.cogni.Ros2Bridge;
 import pinorobotics.cogni.TrajectoryRecord;
+import pinorobotics.cogni.db.LabelExistsException;
 import pinorobotics.cogni.db.PoseDatabase;
 
 /**
@@ -54,7 +55,8 @@ public class HandTeachingTool {
     }
 
     @Tool("Start hand‑teaching for a given label. The user can manually guide the arm.")
-    public String start(@P("label") String label) {
+    public String start(@P("label for a new trajectory") String label) {
+        Preconditions.notNull(label);
         LOGGER.debug("Start hand teaching");
         if (teachingInProgress) {
             return "Hand‑teaching already in progress. Stop it before starting a new session.";
@@ -62,6 +64,8 @@ public class HandTeachingTool {
         if (label == null || label.isBlank()) {
             return "Label cannot be empty.";
         }
+        if (poseDatabase.findTrajectory(label).isPresent())
+            throw new LabelExistsException("Trajectory with label '" + label + "' already exists");
         teachingInProgress = true;
         activeLabel = label;
         // Disable motors so the user can manually move the arm
@@ -101,12 +105,12 @@ public class HandTeachingTool {
     }
 
     @Tool("Stop hand‑teaching for a label and save the recorded trajectory")
-    public String stop(@P("label") String label) {
+    public String stop(@P("label of current trajectory") String label) {
+        Preconditions.notNull(label);
         LOGGER.debug("Stop hand teaching");
         if (!teachingInProgress || !activeLabel.equals(label)) {
             return "No active hand teaching for label '" + label + "'";
         }
-        teachingInProgress = false;
         if (recordingThread != null) {
             recordingThread.interrupt();
             try {
@@ -115,13 +119,14 @@ public class HandTeachingTool {
                 Thread.currentThread().interrupt();
             }
         }
-        int wayPointCount = trajectoryBuffer.size();
-        var trajectory = new TrajectoryRecord(label, new ArrayList<>(trajectoryBuffer));
+        var trajectory = new TrajectoryRecord(label, trajectoryBuffer);
         poseDatabase.addTrajectory(trajectory);
+        teachingInProgress = false;
+        int wayPointCount = trajectoryBuffer.size();
         trajectoryBuffer.clear();
+        activeLabel = null;
         // Re‑enable motors
         ros2Bridge.startMotors(true);
-        activeLabel = null;
         return "Trajectory '" + label + "' saved with " + wayPointCount + " distinct poses.";
     }
 }

@@ -18,11 +18,10 @@
 package pinorobotics.cogni.tools;
 
 import dev.langchain4j.agent.tool.Tool;
-import java.util.List;
+import id.xfunction.XJson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseRecord;
-import pinorobotics.cogni.TrajectoryRecord;
 import pinorobotics.cogni.db.PoseDatabase;
 
 /**
@@ -44,14 +43,14 @@ public class ListingTool {
     }
 
     @Tool("List all stored poses.")
-    public List<PoseRecord> listPoses() {
+    public String listPoses() {
         LOGGER.debug("List poses");
-        return db.getSortedPoses();
+        return db.getSortedPoses().toString();
     }
 
     @Tool("List all stored trajectories.")
-    public List<TrajectoryRecord> listTrajectories() {
+    public String listTrajectories() {
         LOGGER.debug("List trajectories");
-        return db.getSortedTrajectories();
+        return XJson.asString("trajectories", db.getSortedTrajectories());
     }
 }

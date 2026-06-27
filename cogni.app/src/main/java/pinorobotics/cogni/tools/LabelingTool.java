@@ -19,6 +19,7 @@ package pinorobotics.cogni.tools;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import id.xfunction.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pinorobotics.cogni.PoseRecord;
@@ -51,7 +52,8 @@ public class LabelingTool {
     @Tool(
             "Store the current robot configuration under a semantic label and return all joint"
                     + " angles for it.")
-    public String storePose(@P("label") String label) {
+    public String storePose(@P("label for a current position") String label) {
+        Preconditions.notNull(label);
         LOGGER.debug("Save label {}", label);
         // 1️⃣  Obtain the latest joint angles from the ROS‑2 bridge.
         double[] currentAngles = rosBridge.getCurrentJointAngles();

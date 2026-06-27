@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 pinorobotics
+ * Copyright 2026 pinorobotics
  * 
  * Website: https://github.com/pinorobotics
  * 
@@ -15,23 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pinorobotics.cogni.app;
-
-import java.time.Duration;
+package pinorobotics.cogni.db;
 
 /**
  * @author aeon aeon_flux@eclipso.ch
  */
-public interface CogniOptions {
-    String ACTION = "action";
-    String START_MCP = "startMcp";
-    String R2D2_CONTROLLER = "r2d2";
-    String LOG_PATH = "logPath";
-    String CONTROLLER_NAME = "controllerName";
-    String JOINT_STATE_TOPIC = "jointStateTopic";
-    String DB_PATH = "dbPath";
-    String HAND_TEACHING_CAPTURE_RATE_IN_MILLIS = "handTeachingCaptureRate";
+public class LabelExistsException extends RuntimeException {
 
-    String DEFAULT_JOINT_STATE_TOPIC = "joint_states";
-    Duration DEFAULT_HAND_TEACHING_CAPTURE_RATE = Duration.ofMillis(500);
+    public LabelExistsException(String text) {
+        super(text);
+    }
 }

@@ -36,6 +36,8 @@ import pinorobotics.cogni.Ros2Bridge;
 import pinorobotics.cogni.db.InMemoryPoseDatabase;
 import pinorobotics.cogni.db.PoseDatabase;
 import pinorobotics.cogni.db.persistent.SqlitePoseDatabase;
+import pinorobotics.cogni.tools.DeletePoseTool;
+import pinorobotics.cogni.tools.DeleteTrajectoryTool;
 import pinorobotics.cogni.tools.HandTeachingTool;
 import pinorobotics.cogni.tools.LabelingTool;
 import pinorobotics.cogni.tools.ListingTool;
@@ -131,6 +133,8 @@ public class CogniApp {
                         List.of("Joint_0", "Joint_1", "Joint_2", "Joint_3", "Joint_4"),
                         poseDb,
                         ros));
+        tools.add(new DeletePoseTool(poseDb));
+        tools.add(new DeleteTrajectoryTool(poseDb));
         if (options.isOptionTrue(CogniOptions.R2D2_CONTROLLER))
             tools.add(
                     new HandTeachingTool(
@@ -138,9 +142,7 @@ public class CogniApp {
                             ros,
                             options.getOptionMillis(
                                             CogniOptions.HAND_TEACHING_CAPTURE_RATE_IN_MILLIS)
-                                    .orElse(
-                                            CogniOptions
-                                                    .DEFAULT_HAND_TEACHING_CAPTURE_RATE_IN_MILLIS)));
+                                    .orElse(CogniOptions.DEFAULT_HAND_TEACHING_CAPTURE_RATE)));
         McpServer server = new McpServer(tools, serverInfo);
         setupMcpLogging();
         new StdioMcpServerTransport(System.in, System.out, server).awaitClose();

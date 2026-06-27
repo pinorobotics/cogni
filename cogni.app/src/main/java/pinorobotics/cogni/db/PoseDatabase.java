@@ -37,14 +37,30 @@ public interface PoseDatabase {
      *
      * @param pose the record to store; label must be non‑null and not empty
      */
-    void addPose(PoseRecord pose);
+    void addPose(PoseRecord pose) throws LabelExistsException;
 
     /**
      * Stores or updates a trajectory record.
      *
      * @param trajectory the record to store; trajectory label must be unique
      */
-    void addTrajectory(TrajectoryRecord trajectory);
+    void addTrajectory(TrajectoryRecord trajectory) throws LabelExistsException;
+
+    /**
+     * Removes a pose entry by its label. If the label does not exist, this operation is idempotent
+     * (no exception thrown).
+     *
+     * @param label the label of the pose to delete
+     */
+    void deletePose(String label);
+
+    /**
+     * Removes a trajectory entry by its label. If the label does not exist, this operation is
+     * idempotent (no exception thrown).
+     *
+     * @param label the label of the trajectory to delete
+     */
+    void deleteTrajectory(String label);
 
     /**
      * Retrieves a pose by its label.

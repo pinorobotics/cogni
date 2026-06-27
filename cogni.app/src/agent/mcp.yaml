@@ -1,4 +1,4 @@
 mcpServers:
   cogni:
     command: ../cogni
-    args: [-action=startMcp, -logFile=/tmp/cogni.log, -controllerName=dorna2_arm_controller]
+    args: [-action=startMcp, -logPath=/tmp/cogni.log, -controllerName=dorna2_arm_controller]

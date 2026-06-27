@@ -102,9 +102,13 @@ public class SqlitePoseDatabaseIT {
         var retrieved = found.get();
 
         assertEquals(
-                """
-                { "label": "traj-001", "poses": [{ "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [1, 2, 3, 4, 5] }, { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [5, 4, 3, 2, 1] }] }\
-                """,
+"""
+{
+  "label": traj-001,
+  "first": { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [1, 2, 3, 4, 5] },
+  "last": { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [5, 4, 3, 2, 1] }
+}
+""",
                 retrieved.toString());
     }
 
@@ -166,8 +170,57 @@ public class SqlitePoseDatabaseIT {
                         "Adding a pose with an existing label must fail");
         assertEquals(
                 """
-                org.hibernate.exception.GenericJDBCException: could not execute statement [[SQLITE_CONSTRAINT_UNIQUE] A UNIQUE constraint failed (UNIQUE constraint failed: pose_records.label)] [insert into pose_records (label,pose_id) values (?,?)]\
+                pinorobotics.cogni.db.LabelExistsException: Pose with label 'unique-1' already exists\
                 """,
                 ex.getMessage());
+    }
+
+    @Test
+    void addDeleteAddPose() {
+        var poseSample = new PoseSample(Instant.EPOCH, 0.1, 0.2, 0.3, 0.4, 0.5);
+        var poseRecord = new PoseRecord("pose-001", poseSample);
+
+        db.addPose(poseRecord);
+        assertEquals(true, db.findPose("pose-001").isPresent());
+        db.deletePose(poseRecord.label());
+        assertEquals(true, db.findPose("pose-001").isEmpty());
+        db.addPose(poseRecord);
+        assertEquals(true, db.findPose("pose-001").isPresent());
+    }
+
+    @Test
+    void addDeleteAddTrajectory() {
+        db.addTrajectory(
+                new TrajectoryRecord(
+                        "traj123",
+                        List.of(new PoseSample(Instant.EPOCH, 0.1, 0.2, 0.3, 0.4, 0.5))));
+        assertEquals(
+"""
+Optional[{
+  "label": traj123,
+  "first": { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [0.1, 0.2, 0.3, 0.4, 0.5] },
+  "last": { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [0.1, 0.2, 0.3, 0.4, 0.5] }
+}
+]\
+""",
+                db.findTrajectory("traj123").toString());
+
+        db.deleteTrajectory("traj123");
+        assertEquals(true, db.findTrajectory("traj123").isEmpty());
+
+        db.addTrajectory(
+                new TrajectoryRecord(
+                        "traj123",
+                        List.of(new PoseSample(Instant.EPOCH, 0.11, 0.12, 0.13, 0.14, 0.15))));
+        assertEquals(
+"""
+Optional[{
+  "label": traj123,
+  "first": { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [0.11, 0.12, 0.13, 0.14, 0.15] },
+  "last": { "timestamp": "1970-01-01T00:00:00Z", "jointAngles": [0.11, 0.12, 0.13, 0.14, 0.15] }
+}
+]\
+""",
+                db.findTrajectory("traj123").toString());
     }
 }
