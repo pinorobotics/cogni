@@ -1,5 +1,5 @@
 # Version 1
 
-- Initial commit
+This version is currently under development.
 
-[](https://github.com/pinorobotics/cogni/raw/main/cogni/release/cogni-1.0-SNAPSHOT.zip)
+Until it is ready please build it manually (see [DEVELOPMENT.md](../../DEVELOPMENT.md))
